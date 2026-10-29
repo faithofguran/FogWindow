@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faith of Guran</title>
+<meta name="description" content="Faith of Guran: un gioco di strategia a turni asincrono, con informazioni nascoste, quattordici classi e quattro guardiani. Coming soon.">
+<meta property="og:title" content="Faith of Guran">
+<meta property="og:description" content="Gioco di strategia a turni asincrono. Coming soon.">
+<meta property="og:image" content="img/logo/scritta.webp">
+<meta name="theme-color" content="#15110d">
+<link rel="icon" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* ---------- Token ---------- */
+:root{
+  /* spaziatura: solo multipli di 8 */
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:40px; --s6:48px; --s8:64px; --s10:80px; --s12:96px; --s16:128px;
+  --r1:8px; --r2:16px; --r3:24px;
+  --bg:#15110d; --bg2:#1c1712; --card:#231d17; --card2:#2b241c; --bd:#3d3328; --ink:#efe4d0; --mut:#ad9c84;
+  --oro:#f2c75c; --oro2:#9a7a2c; --rosso:#a5402d; --pergamena:#f3e6c8;
+  --foresta:#3f8b5b; --ghiaccio:#5d93a8; --deserto:#c49a62; --vulcano:#c4553a; --centro:#f2c75c;
+  --font:"Alegreya Sans",system-ui,sans-serif; --title:"Macondo",serif; --display:"Cinzel",serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.5 var(--font);overflow-x:hidden}
+img{max-width:100%;display:block}
+button{font:inherit;color:inherit}
+.wrap{max-width:1136px;margin:0 auto;padding:0 var(--s2)}
+section{padding:var(--s16) 0;position:relative}
+h2{font:400 clamp(32px,5vw,48px)/1 var(--title);margin:0 0 var(--s2);color:var(--oro)}
+.lead{color:var(--mut);max-width:640px;margin:0 0 var(--s6);font-size:20px}
+.kicker{display:inline-flex;align-items:center;gap:var(--s1);font:700 14px/1 var(--display);letter-spacing:.24em;text-transform:uppercase;color:var(--rosso);margin-bottom:var(--s2)}
+.kicker::before{content:"";width:var(--s4);height:2px;background:currentColor}
+svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- Comparsa allo scorrimento ---------- */
+.rv{opacity:0;transform:translateY(var(--s4));transition:opacity .8s var(--ease),transform .8s var(--ease);transition-delay:calc(var(--d,0) * 80ms)}
+.rv.in{opacity:1;transform:none}
+
+/* ---------- Barra ---------- */
+.nav{position:fixed;inset:0 0 auto;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:var(--s2) var(--s3);transition:background .3s,padding .3s,border-color .3s;border-bottom:1px solid transparent}
+.nav.solid{background:#15110dee;backdrop-filter:blur(8px);padding:var(--s1) var(--s3);border-color:var(--bd)}
+.nav img{height:40px;width:auto}
+.nav ul{display:flex;gap:var(--s3);list-style:none;margin:0;padding:0}
+.nav a{color:var(--mut);text-decoration:none;font-weight:700;font-size:16px;transition:color .2s}
+.nav a:hover,.nav a.on{color:var(--oro)}
+
+/* ---------- Apertura ---------- */
+.hero{position:relative;min-height:min(100svh,960px);display:grid;place-items:center;text-align:center;padding:var(--s12) var(--s2) var(--s16);overflow:hidden}
+.hero .bg{position:absolute;inset:-8%;background:url(img/mappa.png) center/cover;filter:blur(3px) saturate(.75) brightness(.4);transform:scale(1.08) translate3d(var(--px,0),var(--py,0),0);transition:transform .6s var(--ease)}
+.hero .vig{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 46%,#f3e6c814,transparent 70%),radial-gradient(ellipse at center,transparent 30%,var(--bg) 85%),linear-gradient(transparent 70%,var(--bg))}
+#nebbia{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero .in{position:relative;z-index:1;width:100%}
+.simbolo{width:clamp(96px,12vw,152px);margin:0 auto var(--s3);filter:drop-shadow(0 8px 24px #000);animation:fluttua 6s ease-in-out infinite}
+@keyframes fluttua{50%{transform:translateY(-8px) rotate(-2deg)}}
+.scritta{width:min(1040px,94vw);margin:0 auto;
+  /* alone chiaro: rende leggibili anche le lettere nere senza coprirle */
+  filter:drop-shadow(0 0 1px var(--pergamena)) drop-shadow(0 0 1px var(--pergamena)) drop-shadow(0 0 2px var(--pergamena)) drop-shadow(0 0 24px #f3e6c866) drop-shadow(0 8px 24px #000c)}
+.hero h1{margin:0;opacity:0;transform:scale(.94);animation:entra 1.2s .2s var(--ease) forwards}
+@keyframes entra{to{opacity:1;transform:none}}
+.tag{font:500 clamp(19px,2.4vw,24px)/1.4 var(--font);max-width:680px;margin:var(--s4) auto var(--s5);text-shadow:0 2px 16px #000;opacity:0;animation:entra 1s .7s var(--ease) forwards}
+.soon{position:relative;display:inline-flex;align-items:center;gap:var(--s2);font:700 clamp(16px,2.2vw,22px)/1 var(--display);letter-spacing:.32em;text-transform:uppercase;color:var(--bg);background:var(--oro);padding:var(--s3) var(--s5);border-radius:var(--r2);box-shadow:0 8px 0 var(--oro2),0 16px 48px #f2c75c40;overflow:hidden;opacity:0;animation:entra 1s 1s var(--ease) forwards}
+.soon::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,#fff8 50%,transparent 70%);transform:translateX(-100%);animation:luce 3.2s 2s ease-in-out infinite}
+@keyframes luce{40%,100%{transform:translateX(100%)}}
+.soon .dot{width:8px;height:8px;border-radius:50%;background:var(--bg);animation:pulsa 1.6s infinite}
+@keyframes pulsa{50%{opacity:.25}}
+.scorri{position:absolute;bottom:var(--s4);left:50%;transform:translateX(-50%);z-index:1;color:var(--mut);display:grid;justify-items:center;gap:var(--s1);text-decoration:none;font-size:14px;letter-spacing:.24em;text-transform:uppercase}
+.scorri svg{transform:rotate(90deg);animation:giu 1.8s infinite}
+@keyframes giu{50%{translate:0 8px}}
+
+/* ---------- Numeri ---------- */
+.numeri{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);margin-top:calc(var(--s8) * -1);position:relative;z-index:2}
+.num{background:var(--card);border:1px solid var(--bd);border-radius:var(--r2);padding:var(--s3);text-align:center}
+.num b{display:block;font:400 clamp(40px,6vw,64px)/1 var(--title);color:var(--oro)}
+.num span{color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:14px}
+
+/* ---------- Punti ---------- */
+.punti{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:var(--s3)}
+.punto{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:var(--r3);padding:var(--s4);overflow:hidden;transition:transform .4s var(--ease),border-color .3s}
+.punto::before{content:"";position:absolute;inset:0;background:radial-gradient(240px circle at var(--mx,50%) var(--my,0%),#f2c75c1f,transparent 70%);opacity:0;transition:opacity .3s}
+.punto:hover{border-color:#f2c75c66;transform:translateY(-8px)}
+.punto:hover::before{opacity:1}
+.punto .ico{display:grid;place-items:center;width:var(--s8);height:var(--s8);border-radius:var(--r2);background:#f2c75c14;color:var(--oro);margin-bottom:var(--s3);transition:transform .4s var(--ease)}
+.punto:hover .ico{transform:rotate(-8deg) scale(1.08)}
+.punto .ico svg{width:32px;height:32px}
+.punto b{display:block;font:400 24px/1.2 var(--title);color:var(--ink);margin-bottom:var(--s1)}
+.punto p{margin:0;color:var(--mut)}
+
+/* ---------- Mondo ---------- */
+.mondo{display:grid;grid-template-columns:1.1fr 1fr;gap:var(--s8);align-items:center}
+.mappa{position:relative;border-radius:var(--r3);overflow:hidden;border:2px solid var(--bd);box-shadow:0 24px 64px #000a;aspect-ratio:1}
+.mappa img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
+.mappa svg.zone{position:absolute;inset:0;width:100%;height:100%}
+.zone polygon{fill:#0b0806;opacity:0;transition:opacity .5s var(--ease)}
+.mappa.focus .zone polygon{opacity:.72}
+.mappa.focus .zone polygon.on{opacity:0}
+.zone .bordo{fill:none;stroke:var(--c);stroke-width:.6;opacity:0;transition:opacity .5s}
+.mappa.focus .zone .bordo.on{opacity:1}
+.biomi{list-style:none;padding:0;margin:0;display:grid;gap:var(--s1)}
+.biomi button{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;gap:var(--s2);align-items:center;background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--c);border-radius:var(--r2);padding:var(--s2);transition:background .3s,transform .3s var(--ease)}
+.biomi button:hover,.biomi button.on,.biomi button:focus-visible{background:var(--card2);transform:translateX(8px)}
+.biomi .ic{color:var(--c);display:grid;place-items:center;width:var(--s5);height:var(--s5);border-radius:var(--r1);background:color-mix(in srgb,var(--c) 16%,transparent)}
+.biomi b{font:400 22px/1.2 var(--title);display:block}
+.biomi span{display:block;color:var(--mut);font-size:16px}
+
+/* ---------- Classi ---------- */
+.classi-box{display:grid;grid-template-columns:1fr 1.1fr;gap:var(--s6);align-items:center;background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--bd);border-radius:var(--r3);padding:var(--s5);overflow:hidden;position:relative}
+.palco{position:relative;aspect-ratio:1;display:grid;place-items:center}
+.palco::before{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle,var(--glow,#f2c75c33),transparent 70%);transition:background .6s}
+.palco .ruota{position:absolute;inset:4%;border-radius:50%;border:1px dashed #f2c75c40;animation:gira 60s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+.palco img,.palco .seg{position:relative;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 32px #000c)}
+.palco .seg{display:grid;place-items:center;color:#5a4c3c}
+.palco .seg svg{width:40%;height:40%;stroke-width:1}
+.palco .x{animation:appare .6s var(--ease)}
+@keyframes appare{from{opacity:0;transform:translateX(var(--dir,32px)) scale(.96)}}
+.info .x{animation:appare .6s .08s var(--ease) backwards}
+.info h3{font:400 clamp(40px,5vw,56px)/1 var(--title);margin:0 0 var(--s2);color:var(--oro)}
+.meta{display:flex;gap:var(--s1);flex-wrap:wrap;margin-bottom:var(--s3)}
+.pill{display:inline-flex;align-items:center;gap:var(--s1);border:1px solid var(--bd);border-radius:99px;padding:4px var(--s2);font-size:16px;color:var(--mut)}
+.pill svg{width:16px;height:16px;color:var(--oro)}
+.ab{background:#0b080666;border:1px solid var(--bd);border-radius:var(--r2);padding:var(--s2) var(--s3);margin-bottom:var(--s2)}
+.ab .t{display:flex;align-items:center;gap:var(--s1);font-weight:800;margin-bottom:4px}
+.ab .t small{margin-left:auto;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.ab p{margin:0;color:var(--mut);font-size:16px}
+.frecce{display:flex;gap:var(--s1);margin-top:var(--s3)}
+.frecce button{all:unset;cursor:pointer;display:grid;place-items:center;width:var(--s6);height:var(--s6);border-radius:var(--r2);border:1px solid var(--bd);background:var(--card);transition:background .2s,color .2s}
+.frecce button:hover,.frecce button:focus-visible{background:var(--oro);color:var(--bg)}
+.frecce .cont{margin-left:auto;align-self:center;color:var(--mut);font:700 16px var(--display);letter-spacing:.16em}
+.mini{display:flex;gap:var(--s1);margin-top:var(--s3);overflow-x:auto;padding:var(--s1) 4px var(--s2);scroll-snap-type:x mandatory;scrollbar-width:thin}
+.mini button{all:unset;cursor:pointer;flex:none;width:var(--s10);text-align:center;scroll-snap-align:center;opacity:.55;transition:opacity .3s,transform .3s var(--ease)}
+.mini button:hover{opacity:.9}
+.mini button.on{opacity:1;transform:translateY(-4px)}
+.mini .th{aspect-ratio:1;border-radius:var(--r2);border:2px solid var(--bd);background:radial-gradient(circle at 50% 40%,#3a3026,#1a1511 70%);overflow:hidden;display:grid;place-items:center;color:#5a4c3c;transition:border-color .3s}
+.mini button.on .th{border-color:var(--oro)}
+.mini img{width:100%;height:100%;object-fit:cover}
+.mini span{display:block;font-size:14px;margin-top:4px;font-weight:700}
+
+/* ---------- Guardiani ---------- */
+.guardiani{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:var(--s3);perspective:1200px}
+.guardiano{display:flex;flex-direction:column;position:relative;background:var(--card);border:1px solid var(--bd);border-radius:var(--r3);overflow:hidden;transform-style:preserve-3d;transition:transform .2s ease-out,border-color .3s,box-shadow .3s;will-change:transform}
+.guardiano:hover{border-color:var(--c);box-shadow:0 24px 64px #000a,0 0 0 1px var(--c)}
+.guardiano .img{aspect-ratio:1;overflow:hidden;background:radial-gradient(circle at 50% 55%,color-mix(in srgb,var(--c) 40%,transparent),transparent 70%);position:relative}
+.guardiano .img::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),#fff2,transparent 40%);opacity:0;transition:opacity .3s}
+.guardiano:hover .img::after{opacity:1}
+.guardiano img{position:absolute;left:0;right:0;bottom:0;margin:0 auto;height:88%;width:auto;max-width:92%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 16px 24px #000);transform:translateZ(40px);transition:transform .5s var(--ease)}
+.guardiano:hover img{transform:translateZ(40px) scale(1.06)}
+.guardiano .t{padding:var(--s3);flex:1;display:flex;flex-direction:column}
+
+.guardiano em{display:inline-flex;align-items:center;gap:var(--s1);font-style:normal;color:var(--c);font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:.16em}
+.guardiano em svg{width:16px;height:16px}
+.guardiano b{display:block;font:400 26px/1.2 var(--title);margin-top:var(--s1)}
+.guardiano .sub{display:block;color:var(--mut);font-size:16px;margin-bottom:var(--s2)}
+.guardiano p{margin:0;color:var(--mut);font-size:16px;padding-top:var(--s2);border-top:1px solid var(--bd)}
+.guardiano p strong{color:var(--ink)}
+
+/* ---------- Schermate ---------- */
+.schermate{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3);align-items:start}
+.tel{margin:0;transition:transform .5s var(--ease)}
+.tel:nth-child(even){margin-top:var(--s8)}
+.tel .f{border-radius:var(--r3);border:8px solid #0b0806;outline:1px solid var(--bd);overflow:hidden;box-shadow:0 24px 48px #000a;aspect-ratio:600/1104;background:#0b0806}
+.tel img{width:100%;height:100%;object-fit:cover;object-position:top;transition:object-position 4s ease-in-out}
+.tel:hover{transform:translateY(-8px) rotate(-1deg)}
+.tel:hover img{object-position:bottom}
+.tel figcaption{display:flex;align-items:center;justify-content:center;gap:var(--s1);color:var(--mut);font-size:16px;margin-top:var(--s2)}
+.tel figcaption svg{width:16px;height:16px;color:var(--oro)}
+
+/* ---------- Fondo ---------- */
+.finale{text-align:center;padding:var(--s16) var(--s2);background:radial-gradient(ellipse at 50% 100%,#f2c75c1a,transparent 60%),var(--bg2);border-top:1px solid var(--bd)}
+.finale .simbolo{width:var(--s10)}
+.finale h2{margin-bottom:var(--s3)}
+.finale .soon{opacity:1;animation:none}
+footer{padding:var(--s4) var(--s2);text-align:center;color:var(--mut);font-size:14px;border-top:1px solid var(--bd)}
+footer a{color:var(--mut)}footer a:hover{color:var(--oro)}
+
+/* ---------- Telefono ---------- */
+@media (max-width:880px){
+  section{padding:var(--s12) 0}
+  .nav ul{display:none}
+  .mondo,.classi-box{grid-template-columns:1fr;gap:var(--s4)}
+  .classi-box{padding:var(--s3)}
+  .palco{max-width:320px;margin:0 auto;width:100%}
+  .schermate{grid-template-columns:repeat(4,72%);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:var(--s2)}
+  .tel{scroll-snap-align:center}
+  .tel:nth-child(even){margin-top:0}
+  .numeri{gap:var(--s1)}
+  .num{padding:var(--s2) var(--s1)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv,.hero h1,.tag,.soon{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- Set di icone: lo stesso del gioco (apps/web/src/ui/Icone.tsx) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-hide" viewBox="0 0 24 24"><path d="M3 12s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6zM4 4l16 16"/></symbol>
+  <symbol id="i-trial" viewBox="0 0 24 24"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></symbol>
+  <symbol id="i-sword" viewBox="0 0 24 24"><path d="M14 4h6v6L9 21l-3-3L17 7M5 15l4 4M3 21l3-3"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-8-5-8-11a4 4 0 018-1 4 4 0 018 1c0 6-8 11-8 11z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M12 3c5 0 8 6 8 12-3 3-13 3-16 0 0-6 3-12 8-12zM9 12h6"/></symbol>
+  <symbol id="i-fire" viewBox="0 0 24 24"><path d="M12 3c3 4 6 6 6 11a6 6 0 01-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-5 1-8z"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 1110 4a6 6 0 0010 10z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></symbol>
+  <symbol id="i-temple" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10M2 10l10-7 10 7z"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+  <symbol id="i-scroll" viewBox="0 0 24 24"><path d="M6 4h11a2 2 0 012 2v12a2 2 0 01-2 2H8a2 2 0 01-2-2V4zM6 4a2 2 0 00-2 2v2h2M10 9h6M10 13h6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M5 20l3-7 4 2 3-8 4 13"/><circle cx="16" cy="4" r="2"/></symbol>
+  <symbol id="i-wizard" viewBox="0 0 24 24"><path d="M12 2l3 7h-6zM9 9l-4 13h14L15 9M8 16h8"/></symbol>
+  <symbol id="i-bow" viewBox="0 0 24 24"><path d="M6 3c8 3 8 15 0 18M6 3v18M4 12h16M17 9l3 3-3 3"/></symbol>
+  <symbol id="i-axe" viewBox="0 0 24 24"><path d="M6 21L18 9M14 5c3-2 6 0 6 0s0 5-3 6l-4-4z"/></symbol>
+  <symbol id="i-dash" viewBox="0 0 24 24"><path d="M13 4l-4 8h6l-4 8M3 9h4M2 14h4"/></symbol>
+</svg>
+
+<nav class="nav" id="nav">
+  <a href="#top" aria-label="Inizio"><img src="img/logo/simbolo.webp" alt=""></a>
+  <ul>
+    <li><a href="#gioco">Il gioco</a></li>
+    <li><a href="#mondo">Il mondo</a></li>
+    <li><a href="#classi">Le classi</a></li>
+    <li><a href="#guardiani">I guardiani</a></li>
+    <li><a href="#schermate">Nel gioco</a></li>
+  </ul>
+</nav>
+
+<header class="hero" id="top">
+  <div class="bg" id="hero-bg"></div>
+  <canvas id="nebbia"></canvas>
+  <div class="vig"></div>
+  <div class="in">
+    <img class="simbolo" src="img/logo/simbolo.webp" alt="">
+    <h1><img class="scritta" src="img/logo/scritta.webp" alt="Faith of Guran"></h1>
+    <p class="tag">Un gioco di strategia a turni, giocato con calma. Esplora un'isola avvolta nella nebbia, supera le prove degli dèi e resta l'ultimo in piedi.</p>
+    <span class="soon"><span class="dot"></span>Coming soon</span>
+  </div>
+  <a class="scorri" href="#gioco">Scopri<svg class="i"><use href="#i-next"/></svg></a>
+</header>
+
+<main>
+<div class="wrap">
+  <div class="numeri">
+    <div class="num rv"><b data-n="14">0</b><span>Classi</span></div>
+    <div class="num rv" style="--d:1"><b data-n="5">0</b><span>Biomi</span></div>
+    <div class="num rv" style="--d:2"><b data-n="4">0</b><span>Guardiani</span></div>
+  </div>
+</div>
+
+<section id="gioco">
+  <div class="wrap">
+    <div class="kicker rv">Il gioco</div>
+    <h2 class="rv">Cos'è Faith of Guran</h2>
+    <p class="lead rv">Una partita dura giorni, non minuti. Ognuno gioca il proprio turno quando vuole, dal telefono o dal computer: una notifica ti avvisa quando tocca a te.</p>
+    <div class="punti">
+      <div class="punto rv"><div class="ico"><svg class="i"><use href="#i-clock"/></svg></div><b>Turni asincroni</b><p>Niente sessioni da organizzare: fai la tua mossa quando hai un momento e torna più tardi.</p></div>
+      <div class="punto rv" style="--d:1"><div class="ico"><svg class="i"><use href="#i-hide"/></svg></div><b>Informazioni nascoste</b><p>Vedi solo ciò che hai intorno. Chi si nasconde tra quegli alberi? Lo scoprirai a tue spese.</p></div>
+      <div class="punto rv" style="--d:2"><div class="ico"><svg class="i"><use href="#i-trial"/></svg></div><b>Prove ed eventi</b><p>Completa le prove dei templi, vinci gli eventi e forgia oggetti leggendari unici.</p></div>
+      <div class="punto rv" style="--d:3"><div class="ico"><svg class="i"><use href="#i-sword"/></svg></div><b>Quattordici classi</b><p>Ogni classe ha la sua passiva e la sua abilità: trova lo stile che fa per te.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="mondo" style="background:var(--bg2)">
+  <div class="wrap mondo">
+    <div class="mappa rv" id="mappa">
+      <img src="img/mappa.png" alt="La mappa dell'isola di Guran" loading="lazy">
+      <svg class="zone" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <polygon data-b="foresta" points="0,0 100,0 59,41 41,41"/>
+        <polygon data-b="ghiacciaio" points="100,0 100,100 59,59 59,41"/>
+        <polygon data-b="deserto" points="100,100 0,100 41,59 59,59"/>
+        <polygon data-b="vulcano" points="0,100 0,0 41,41 41,59"/>
+        <polygon data-b="centro" points="41,41 59,41 59,59 41,59"/>
+        <polygon class="bordo" data-b="foresta" style="--c:var(--foresta)" points="0,0 100,0 59,41 41,41"/>
+        <polygon class="bordo" data-b="ghiacciaio" style="--c:var(--ghiaccio)" points="100,0 100,100 59,59 59,41"/>
+        <polygon class="bordo" data-b="deserto" style="--c:var(--deserto)" points="100,100 0,100 41,59 59,59"/>
+        <polygon class="bordo" data-b="vulcano" style="--c:var(--vulcano)" points="0,100 0,0 41,41 41,59"/>
+        <polygon class="bordo" data-b="centro" style="--c:var(--centro)" points="41,41 59,41 59,59 41,59"/>
+      </svg>
+    </div>
+    <div>
+      <div class="kicker rv">Il mondo</div>
+      <h2 class="rv">L'isola di Guran</h2>
+      <p class="lead rv">Cinque biomi, ognuno con il suo tempio, le sue prove e il suo guardiano. E alla fine, uno dopo l'altro, verranno distrutti.</p>
+      <ul class="biomi" id="biomi">
+        <li class="rv"><button data-b="foresta" style="--c:var(--foresta)"><span class="ic"><svg class="i"><use href="#i-leaf"/></svg></span><span><b>Foresta</b><span>Alberi fitti e nascondigli: il regno degli agguati.</span></span></button></li>
+        <li class="rv" style="--d:1"><button data-b="ghiacciaio" style="--c:var(--ghiaccio)"><span class="ic"><svg class="i"><use href="#i-moon"/></svg></span><span><b>Ghiacciaio</b><span>Distese gelate dove ogni passo pesa.</span></span></button></li>
+        <li class="rv" style="--d:2"><button data-b="deserto" style="--c:var(--deserto)"><span class="ic"><svg class="i"><use href="#i-sun"/></svg></span><span><b>Deserto</b><span>Sabbie aperte e rovine antiche.</span></span></button></li>
+        <li class="rv" style="--d:3"><button data-b="vulcano" style="--c:var(--vulcano)"><span class="ic"><svg class="i"><use href="#i-fire"/></svg></span><span><b>Vulcano</b><span>Lava e cenere, per chi non teme il fuoco.</span></span></button></li>
+        <li class="rv" style="--d:4"><button data-b="centro" style="--c:var(--centro)"><span class="ic"><svg class="i"><use href="#i-temple"/></svg></span><span><b>Centro</b><span>L'ultimo rifugio, dove si decide la partita.</span></span></button></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="classi">
+  <div class="wrap">
+    <div class="kicker rv">Le classi</div>
+    <h2 class="rv">Scegli il tuo eroe</h2>
+    <p class="lead rv">Ogni classe può essere presa da un solo giocatore per partita. Sfoglia gli eroi e scopri le loro abilità.</p>
+    <div class="classi-box rv" id="classi-box">
+      <div class="palco" id="palco"><div class="ruota"></div><div id="palco-img"></div></div>
+      <div class="info">
+        <div id="info" aria-live="polite"></div>
+        <div class="frecce">
+          <button id="prev" aria-label="Classe precedente"><svg class="i"><use href="#i-back"/></svg></button>
+          <button id="next" aria-label="Classe successiva"><svg class="i"><use href="#i-next"/></svg></button>
+          <span class="cont" id="cont"></span>
+        </div>
+      </div>
+    </div>
+    <div class="mini" id="mini" role="tablist" aria-label="Classi"></div>
+  </div>
+</section>
+
+<section id="guardiani" style="background:var(--bg2)">
+  <div class="wrap">
+    <div class="kicker rv">I guardiani</div>
+    <h2 class="rv">Si risvegliano nei templi</h2>
+    <p class="lead rv">A metà partita i guardiani escono dai loro templi. Abbatterli richiede coraggio, ma le loro ricompense possono cambiare le sorti della partita.</p>
+    <div class="guardiani" id="guardiani-grid"></div>
+  </div>
+</section>
+
+<section id="schermate">
+  <div class="wrap">
+    <div class="kicker rv">Nel gioco</div>
+    <h2 class="rv">Pensato per il telefono</h2>
+    <p class="lead rv">Comodo anche sul computer. Passa sopra una schermata per scorrerla.</p>
+    <div class="schermate">
+      <figure class="tel rv"><div class="f"><img src="img/partita-1-mappa.webp" alt="La mappa durante una partita" loading="lazy"></div><figcaption><svg class="i"><use href="#i-move"/></svg>La mappa e le tue azioni</figcaption></figure>
+      <figure class="tel rv" style="--d:1"><div class="f"><img src="img/creazione-2-classe.webp" alt="Scelta della classe" loading="lazy"></div><figcaption><svg class="i"><use href="#i-user"/></svg>Crea il tuo personaggio</figcaption></figure>
+      <figure class="tel rv" style="--d:2"><div class="f"><img src="img/prove-1-elenco.webp" alt="Elenco delle prove" loading="lazy"></div><figcaption><svg class="i"><use href="#i-trial"/></svg>Le prove dei templi</figcaption></figure>
+      <figure class="tel rv" style="--d:3"><div class="f"><img src="img/eventi-2-forgia.webp" alt="La Forgia" loading="lazy"></div><figcaption><svg class="i"><use href="#i-fire"/></svg>Forgia il tuo oggetto</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<div class="finale">
+  <img class="simbolo rv" src="img/logo/simbolo.webp" alt="">
+  <h2 class="rv">La nebbia sta per diradarsi</h2>
+  <span class="soon rv"><span class="dot"></span>Coming soon</span>
+</div>
+</main>
+
+<footer>Faith of Guran · © 2026 Guran Games · <a href="mailto:FaithofGuran@gmail.com">FaithofGuran@gmail.com</a> · <a href="privacy.html">Privacy</a></footer>
+
+<script src="dati.js"></script>
+<script>
+(function () {
+  var D = window.FOG;
+  var calmo = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var RITRATTI = ["arciere","barbaro","bardo","cacciatore","cavaliere","druido","guerriero","ladro","paladino","piromante","warlock"];
+  var ICONA = { guerriero:"sword", arciere:"bow", cacciatore:"target", monaco:"dash", paladino:"shield", ladro:"hide", bardo:"scroll", pirata:"flag", piromante:"fire", cavaliere:"crown", mago:"wizard", barbaro:"axe", druido:"leaf", warlock:"moon" };
+  var STAT = { vigore:"Vigore", destrezza:"Destrezza", mente:"Mente" };
+  var COLORE = { vigore:"#a5402d55", destrezza:"#3c7a3555", mente:"#2d4a9a66" };
+  var BIOMA = { foresta:["Foresta","--foresta","leaf"], ghiacciaio:["Ghiacciaio","--ghiaccio","moon"], deserto:["Deserto","--deserto","sun"], vulcano:["Vulcano","--vulcano","fire"] };
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function ico(n){ return '<svg class="i"><use href="#i-' + n + '"/></svg>'; }
+
+  /* Barra */
+  var nav = document.getElementById("nav");
+  addEventListener("scroll", function(){ nav.classList.toggle("solid", scrollY > 64); }, { passive:true });
+
+  /* Comparsa allo scorrimento + numeri */
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if (!e.isIntersecting) return;
+      e.target.classList.add("in"); io.unobserve(e.target);
+      var n = e.target.querySelector("[data-n]");
+      if (n) conta(n);
+    });
+  }, { threshold:.15 });
+  function osserva(root){ (root||document).querySelectorAll(".rv:not(.in)").forEach(function(el){ io.observe(el); }); }
+  function conta(el){
+    var fine = +el.dataset.n, t0 = performance.now();
+    if (calmo) { el.textContent = fine; return; }
+    (function f(t){ var p = Math.min(1,(t-t0)/1200); el.textContent = Math.round(fine*(1-Math.pow(1-p,3))); if (p<1) requestAnimationFrame(f); })(t0);
+  }
+
+  /* Parallasse della mappa nell'apertura */
+  var bg = document.getElementById("hero-bg");
+  if (!calmo) addEventListener("pointermove", function(e){
+    if (scrollY > innerHeight) return;
+    bg.style.setProperty("--px", ((e.clientX/innerWidth - .5) * -24) + "px");
+    bg.style.setProperty("--py", ((e.clientY/innerHeight - .5) * -24) + "px");
+  });
+
+  /* Nebbia */
+  (function(){
+    var cv = document.getElementById("nebbia"), cx = cv.getContext("2d"), w, h, ps = [];
+    function size(){ w = cv.width = cv.offsetWidth; h = cv.height = cv.offsetHeight; }
+    size(); addEventListener("resize", size);
+    for (var i = 0; i < 24; i++) ps.push({ x:Math.random(), y:Math.random(), r:120+Math.random()*240, v:(Math.random()*.4+.1)/1000, a:Math.random()*.08+.03 });
+    function draw(){
+      cx.clearRect(0,0,w,h);
+      ps.forEach(function(p){
+        p.x += p.v; if (p.x - p.r/w > 1) p.x = -p.r/w;
+        var g = cx.createRadialGradient(p.x*w,p.y*h,0,p.x*w,p.y*h,p.r);
+        g.addColorStop(0,"rgba(243,230,200,"+p.a+")"); g.addColorStop(1,"rgba(243,230,200,0)");
+        cx.fillStyle = g; cx.beginPath(); cx.arc(p.x*w,p.y*h,p.r,0,7); cx.fill();
+      });
+      if (!calmo && scrollY < innerHeight) requestAnimationFrame(draw); else setTimeout(function(){ requestAnimationFrame(draw); }, 400);
+    }
+    draw();
+  })();
+
+  /* Luce che segue il puntatore sulle carte */
+  document.addEventListener("pointermove", function(e){
+    var c = e.target.closest && e.target.closest(".punto"); if (!c) return;
+    var r = c.getBoundingClientRect();
+    c.style.setProperty("--mx", (e.clientX-r.left) + "px"); c.style.setProperty("--my", (e.clientY-r.top) + "px");
+  });
+
+  /* Mappa interattiva */
+  var mappa = document.getElementById("mappa"), biomi = document.getElementById("biomi");
+  function evidenzia(b){
+    mappa.classList.toggle("focus", !!b);
+    mappa.querySelectorAll("polygon").forEach(function(p){ p.classList.toggle("on", p.dataset.b === b); });
+    biomi.querySelectorAll("button").forEach(function(x){ x.classList.toggle("on", x.dataset.b === b); });
+  }
+  biomi.addEventListener("pointerover", function(e){ var b = e.target.closest("button"); if (b) evidenzia(b.dataset.b); });
+  biomi.addEventListener("focusin", function(e){ var b = e.target.closest("button"); if (b) evidenzia(b.dataset.b); });
+  biomi.addEventListener("click", function(e){ var b = e.target.closest("button"); if (b) evidenzia(b.dataset.b); });
+  biomi.addEventListener("pointerleave", function(){ evidenzia(null); });
+  biomi.addEventListener("focusout", function(e){ if (!biomi.contains(e.relatedTarget)) evidenzia(null); });
+
+  /* Classi */
+  var cur = 0, palco = document.getElementById("palco-img"), info = document.getElementById("info"), mini = document.getElementById("mini"), box = document.getElementById("classi-box");
+  function figura(c, cls){
+    return RITRATTI.indexOf(c.id) >= 0 ? '<img class="' + cls + '" src="img/classi/' + c.id + '.webp" alt="Ritratto: ' + esc(c.name) + '">' : '<div class="seg ' + cls + '" role="img" aria-label="' + esc(c.name) + ' (ritratto in arrivo)">' + ico(ICONA[c.id] || "user") + '</div>';
+  }
+  mini.innerHTML = D.classi.map(function(c, i){
+    return '<button role="tab" data-i="' + i + '"><div class="th">' + (RITRATTI.indexOf(c.id) >= 0 ? '<img src="img/classi/' + c.id + '.webp" alt="" loading="lazy">' : ico(ICONA[c.id] || "user")) + '</div><span>' + esc(c.name) + '</span></button>';
+  }).join("");
+  function mostra(i, dir){
+    cur = (i + D.classi.length) % D.classi.length;
+    var c = D.classi[cur];
+    var pref = Array.isArray(c.pref) ? c.pref : [];
+    box.style.setProperty("--dir", (dir || 1) * 32 + "px");
+    document.getElementById("palco").style.setProperty("--glow", COLORE[pref[0]] || "#f2c75c33");
+    palco.innerHTML = figura(c, "x");
+    info.innerHTML = '<div class="x"><h3>' + esc(c.name) + '</h3><div class="meta"><span class="pill">' + ico("heart") + c.hp + ' punti vita</span><span class="pill">' + ico("bolt") + esc(pref.length ? pref.map(function(s){return STAT[s];}).join(" · ") : "Caratteristiche miste") + '</span></div>' +
+      '<div class="ab"><div class="t">' + ico("shield") + esc(c.p[0]) + '<small>Passiva</small></div><p>' + esc(c.p[1]) + '</p></div>' +
+      '<div class="ab"><div class="t">' + ico("bolt") + esc(c.a[0]) + '<small>Attiva</small></div><p>' + esc(c.a[1]) + '</p></div></div>';
+    document.getElementById("cont").textContent = String(cur+1).padStart(2,"0") + " / " + D.classi.length;
+    mini.querySelectorAll("button").forEach(function(b, j){ b.classList.toggle("on", j === cur); b.setAttribute("aria-selected", j === cur); });
+    var on = mini.children[cur], mr = mini.getBoundingClientRect(), br = on.getBoundingClientRect();
+    if (br.left < mr.left || br.right > mr.right) mini.scrollBy({ left: br.left - mr.left - mr.width/2 + br.width/2, behavior: calmo ? "auto" : "smooth" });
+  }
+  document.getElementById("prev").onclick = function(){ mostra(cur-1, -1); };
+  document.getElementById("next").onclick = function(){ mostra(cur+1, 1); };
+  mini.addEventListener("click", function(e){ var b = e.target.closest("button"); if (b) mostra(+b.dataset.i, +b.dataset.i < cur ? -1 : 1); });
+  box.addEventListener("keydown", function(e){ if (e.key === "ArrowRight") mostra(cur+1, 1); if (e.key === "ArrowLeft") mostra(cur-1, -1); });
+  var x0 = null;
+  box.addEventListener("touchstart", function(e){ x0 = e.touches[0].clientX; }, { passive:true });
+  box.addEventListener("touchend", function(e){ if (x0 === null) return; var dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 48) mostra(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); x0 = null; });
+  mostra(0);
+
+  /* Guardiani con inclinazione 3D */
+  var gg = document.getElementById("guardiani-grid");
+  gg.innerHTML = D.guardiani.map(function(g, i){
+    var bi = BIOMA[g.biome] || [g.biome, "--oro", "temple"], nome = g.name.split(","), pass = g.passive.split(":");
+    return '<article class="guardiano rv" style="--d:' + i + ';--c:var(' + bi[1] + ')"><div class="img"><img src="img/guardiani/' + g.kind + '.webp" alt="' + esc(nome[0]) + '" loading="lazy"></div>' +
+      '<div class="t"><em>' + ico(bi[2]) + bi[0] + '</em><b>' + esc(nome[0]) + '</b><span class="sub">' + esc((nome[1] || "").trim()) + '</span>' +
+      '<p><strong>' + esc(pass[0]) + ':</strong>' + esc(pass.slice(1).join(":")) + '</p></div></article>';
+  }).join("");
+  if (!calmo && matchMedia("(hover: hover)").matches) {
+    gg.addEventListener("pointermove", function(e){
+      var c = e.target.closest(".guardiano"); if (!c) return;
+      var r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      c.style.transform = "rotateY(" + (x - .5) * 16 + "deg) rotateX(" + (.5 - y) * 16 + "deg)";
+      c.style.setProperty("--mx", x*100 + "%"); c.style.setProperty("--my", y*100 + "%");
+    });
+    gg.addEventListener("pointerout", function(e){ var c = e.target.closest(".guardiano"); if (c && !c.contains(e.relatedTarget)) c.style.transform = ""; });
+  }
+
+  osserva();
+})();
+</script>
+</body>
+</html>
